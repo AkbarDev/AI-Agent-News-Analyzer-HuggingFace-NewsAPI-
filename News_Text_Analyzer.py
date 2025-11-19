@@ -180,14 +180,122 @@ Then selects only three columns:
 3.df.head()
 Shows the first 5 rows of the DataFrame.
 
+# ------------ Step:8 Run AI Agent for Analysis ---------------#
 
+results = []
 
+for idx, row in df.iterrows():
+    title = row["title"]
+    desc = row["description"] or ""
+    text = f"{title}. {desc}"
 
+    try:
+        sentiment = sentiment_model(text[:512])[0]
+        summary = summarizer_model(text, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
+        entities = ner_model(text[:512])
 
+        results.append({
+            "Title": title,
+            "Sentiment": sentiment["label"],
+            "Score": round(sentiment["score"], 2),
+            "Summary": summary,
+            "Entities": [e["word"] for e in entities],
+            "URL": row["url"]
+        })
 
+    except Exception as e:
+        print(f"Error: {e}")
 
+#------------------------Notes--------------------------#
+(a) results = []
 
+Creates an empty list that will store the final processed output for each news article
 
+(b) for idx, row in df.iterrows():
+    title = row["title"]
+    desc = row["description"] or ""
+    text = f"{title}. {desc}"
+
+Loops through each row of your DataFrame.
+	•	idx → row index (0,1,2…)
+	•	row → one full news article (title, description, url)
+	•	row["title"] → fetches the news title
+	•	row["description"] or "" → if description is missing, use empty string
+	•	text → combines title + description into one text block
+
+[This text is fed into the models]
+
+(c) try:
+        sentiment = sentiment_model(text[:512])[0]
+
+Takes first 512 characters (text[:512])
+HuggingFace models have token limits
+Sends text to sentiment_model
+       
+	(d)	summary = summarizer_model(text, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
+
+Feeds the full text to summarizer_model
+	•	max_length=40 → summary will be short
+	•	min_length=10 → minimum summary length
+	•	do_sample=False → deterministic (no randomness)
+	•	Extracts only summary_text field.
+
+     (e) entities = ner_model(text[:512])
+		
+	Sends the first 512 characters to the NER model
+	•	Extracts entities like:
+	•	PERSON
+	•	ORG
+	•	LOCATION
+	•	DATE
+	•	EVENT
+	•	Returns a list of detected entities.
+
+     (f)   results.append({    (
+            "Title": title,
+            "Sentiment": sentiment["label"],
+            "Score": round(sentiment["score"], 2),
+            "Summary": summary,
+            "Entities": [e["word"] for e in entities],
+            "URL": row["url"]
+        })
+		
+#-----------Notes:--------#---------#
+   Creates a dictionary for each article
+	•	Extracts:
+	•	Sentiment label → "POSITIVE"
+	•	Sentiment score → rounded to 2 decimals
+	•	Summary → BART summary
+	•	Entities → list of words only
+	•	Appends to results list
+
+      (g) except Exception as e:
+          print(f"Error: {e}")
+
+#----Notes:-------#
+If anything fails (API missing fields, model error), the script won’t stop — it prints the error and continues to the next article.
+
+#------------------------Step:9 Convert to Dataframe ------------------------#
+analyzed_df = pd.DataFrame(results)
+analyzed_df
+
+What this line does:
+	•	It converts your results list (a list of dictionaries) into a pandas DataFrame.
+	•	Each dictionary in results becomes one row in the DataFrame.
+	•	Each key in the dictionary becomes a column name.
+
+So the DataFrame will have columns:
+
+Title
+Sentiment
+Score
+Summary
+Entities
+URL
+
+#-----------------------Step:10 Export the results to Csv file for further analysis ----------------_#
+
+analyzed_df.to_csv("news_analysis1_results.csv", index=False)
 
 
 
