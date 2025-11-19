@@ -1,0 +1,22 @@
+ai-news-analyzer/
+│
+├── README.md
+├── .gitignore
+├── requirements.txt
+├── config/
+│   └── config_template.yaml       # Template for API keys (without exposing secrets)
+│
+├── notebooks/
+│   └── agent_ai_news_analyzer.ipynb   # Your main Jupyter Notebook
+├── __init__.py
+│   ├── fetch_news.py              # Fetches live news data
+│   ├── analyzer.py                # Sentiment, summary, NER functions
+│   ├── utils.py                   # Helper functions
+├── data/
+│   ├── raw/                       # Raw JSON/news responses
+│   └── processed/                 # Clean CSV files or extracted entities
+│
+├── outputs/
+│   ├── summaries/                 # Summarized articles
+│   ├── sentiments/                # Sentiment analysis outputs
+│   └── entities/                  # NER results
